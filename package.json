@@ -13,7 +13,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.7",
     "framer-motion": "^11.0.3",
-    "react": "^16.14.0",
+    "react": "^16.8.0",
     "react-dom": "^16.14.0",
     "react-lottie": "^1.2.4",
     "react-notification-badge": "^1.5.1",
