@@ -1,1 +1,1 @@
-export const server = import.meta.env.REACT_SERVER;
+export const server = process.env.REACT_SERVER;
