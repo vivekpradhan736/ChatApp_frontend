@@ -73,9 +73,10 @@ const Signup = () => {
       setPicLoading(false);
       navigate("/chats");
     } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred";
       toast({
         title: "Error Occured!",
-        description: error.response.data.message,
+        description: errorMessage,
         status: "error",
         duration: 5000,
         isClosable: true,
