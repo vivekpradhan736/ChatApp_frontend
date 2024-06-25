@@ -6,7 +6,6 @@ import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { server } from "../../config/config";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +52,7 @@ const Signup = () => {
         },
       };
       const { data } = await axios.post(
-        `${process.env.REACT_SERVER}/api/user`,
+        'https://chatapp-backend-or0g.onrender.com/api/user',
         {
           name,
           email,
