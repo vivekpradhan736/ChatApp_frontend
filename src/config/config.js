@@ -1,0 +1,1 @@
+export const server = import.meta.env.REACT_SERVER;
