@@ -41,7 +41,7 @@ const Login = () => {
         },
       };
 
-      const { data } = await axios.post(`/api/user/login`, { email, password }, config );
+      const { data } = await axios.post('https://chatapp-backend-or0g.onrender.com/api/user/login', { email, password }, config );
 
       toast({
         title: "Login Successful",

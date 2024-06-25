@@ -109,7 +109,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
       setLoading(true);
 
       const { data } = await axios.get(
-        `/api/message/${selectedChat._id}`,
+        `https://chatapp-backend-or0g.onrender.com/api/message/${selectedChat._id}`,
         config
       );
       setMessages(data);
@@ -140,7 +140,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
         };
         setNewMessage("");
         const { data } = await axios.post(
-          "/api/message",
+          "https://chatapp-backend-or0g.onrender.com/api/message",
           {
             content: newMessage,
             chatId: selectedChat,
@@ -300,7 +300,7 @@ function notification_sound() {
         },
       };
       const { data } = await axios.put(
-        `/api/chat/groupremove`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/groupremove',
         {
           chatId: selectedChat._id,
           userId: user1._id,
@@ -334,7 +334,7 @@ function notification_sound() {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.post(`/api/chat`, { userId }, config);
+      const { data } = await axios.post('https://chatapp-backend-or0g.onrender.com/api/chat', { userId }, config);
 
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
       setSelectedChat(data);
@@ -360,7 +360,7 @@ function notification_sound() {
         },
       };
       const data = await axios.delete(
-        `/api/chat/contactremove`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/contactremove',
         { chatId },
         config
       );

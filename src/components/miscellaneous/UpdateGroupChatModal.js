@@ -50,7 +50,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
+      const { data } = await axios.get(`https://chatapp-backend-or0g.onrender.com/api/user?search=${search}`, config);
       setLoading(false);
       setSearchResult(data);
     } catch (error) {
@@ -77,7 +77,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
         },
       };
       const { data } = await axios.put(
-        `/api/chat/rename`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/rename',
         {
           chatId: selectedChat._id,
           chatName: groupChatName,
@@ -134,7 +134,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
         },
       };
       const { data } = await axios.put(
-        `/api/chat/groupadd`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/groupadd',
         {
           chatId: selectedChat._id,
           userId: user1._id,
@@ -179,7 +179,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
         },
       };
       const { data } = await axios.put(
-        `/api/chat/groupremove`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/groupremove',
         {
           chatId: selectedChat._id,
           userId: user1._id,
@@ -258,7 +258,7 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
         },
       };
       const { data } = await axios.put(
-        `/api/chat/changepic`,
+        'https://chatapp-backend-or0g.onrender.com/api/chat/changepic',
         {
           chatId: selectedChat._id,
           pic: pic,

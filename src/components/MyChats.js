@@ -34,7 +34,7 @@ const MyChats = forwardRef((props, ref, fetchAgain) => {
         },
       };
 
-      const { data } = await axios.get("/api/chat", config);
+      const { data } = await axios.get("https://chatapp-backend-or0g.onrender.com/api/chat", config);
       setChats(data);
     } catch (error) {
       toast({
