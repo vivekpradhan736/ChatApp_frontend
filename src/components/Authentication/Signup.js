@@ -53,7 +53,7 @@ const Signup = () => {
         },
       };
       const { data } = await axios.post(
-        `/api/user`,
+        'https://chatapp-backend-or0g.onrender.com/api/user',
         {
           name,
           email,
