@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { Box, Text } from "@chakra-ui/layout";
 import { Tooltip } from "@chakra-ui/tooltip";
@@ -31,6 +31,7 @@ import { Effect } from "react-notification-badge";
 import UserListItem from "../userAvatar/UserListItem.js";
 import { ChatState } from "../../Context/ChatProvider";
 import { getSender } from "../../config/ChatLogics.js";
+import debounce from "lodash.debounce";
 
 const SideDrawer = () => {
   const [search, setSearch] = useState("");
@@ -72,17 +73,17 @@ const SideDrawer = () => {
     navigate("/");
   };
 
-  const handleSearch = async () => {
-    if (!search) {
-      toast({
-        title: "Please Enter something in search",
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-        position: "top-left",
-      });
-      return;
-    }
+  const handleSearch = async (value = '') => {
+    // if (!search) {
+    //   toast({
+    //     title: "Please Enter something in search",
+    //     status: "warning",
+    //     duration: 5000,
+    //     isClosable: true,
+    //     position: "top-left",
+    //   });
+    //   return;
+    // }
 
     try {
       setLoading(true);
@@ -93,7 +94,7 @@ const SideDrawer = () => {
         },
       };
 
-      const { data } = await axios.get(`https://chatapp-backend-or0g.onrender.com/api/user?search=${search}`, config);
+      const { data } = await axios.get(`https://chatapp-backend-or0g.onrender.com/api/user?search=${value}`, config);
 
       setLoading(false);
       setSearchResult(data);
@@ -136,6 +137,17 @@ const SideDrawer = () => {
       });
     }
   };
+
+  const debounceAPI = useCallback(debounce((value)=> handleSearch(value), 1000), [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSearch();
+    }, 2000); 
+    
+    return () => clearTimeout(timer);
+  }, [])
+
   return (
     <>
       <Box
@@ -327,20 +339,26 @@ const SideDrawer = () => {
                 placeholder="Search by name or email"
                 mr={2}
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  debounceAPI(e.target.value)
+                }}
               />
               <Button onClick={handleSearch}>Go</Button>
             </Box>
             {loading ? (
               <ChatLoading />
             ) : (
-              searchResult?.map((user) => (
-                <UserListItem
-                  key={user._id}
-                  user={user}
-                  handleFunction={() => accessChat(user._id)}
-                />
-              ))
+              searchResult.length > 0 ? (
+                searchResult?.map((user) => (
+                  <UserListItem
+                    key={user._id}
+                    user={user}
+                    handleFunction={() => accessChat(user._id)}
+                  />
+                ))) : (
+                <Text className="text-red-600 py-6 px-14">No User Found🙅🏻</Text>
+                )
             )}
             {loadingChat && <Spinner m="auto" display="flex" />}
           </DrawerBody>
