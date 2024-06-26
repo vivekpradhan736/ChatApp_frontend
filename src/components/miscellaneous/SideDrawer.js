@@ -344,7 +344,7 @@ const SideDrawer = () => {
                   debounceAPI(e.target.value)
                 }}
               />
-              <Button onClick={handleSearch}>Go</Button>
+              <Button onClick={handleSearch}>All</Button>
             </Box>
             {loading ? (
               <ChatLoading />
