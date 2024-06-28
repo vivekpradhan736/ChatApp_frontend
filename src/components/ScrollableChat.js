@@ -7,10 +7,25 @@ import {
   isSameSenderMargin,
   isSameUser,
 } from "../config/ChatLogics";
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Button,
+} from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
+import { useState } from "react";
 
 const ScrollableChat = ({ messages }) => {
   const { user } = ChatState();
+  console.log("messages", messages);
+  const [showDemoPic, setShowDemoPic] = useState(false);
+  const [imageData, setImageData] = useState("");
 
   return (
     <ScrollableFeed>
@@ -53,6 +68,39 @@ const ScrollableChat = ({ messages }) => {
                   maxWidth: "75%",
                 }}
               >
+                {m.attachments.length > 0 ? (
+                  <>
+                    <div onClick={() => {
+                      setImageData(m?.attachments[0]?.url)
+                      setShowDemoPic(true)}}>
+                      <img
+                        src={m?.attachments[0]?.url}
+                        alt="attachment"
+                        className="w-40 h-40"
+                      />
+                    </div>
+
+            <Modal
+            isOpen={showDemoPic}
+            onClose={() => setShowDemoPic(false)}
+            size="xl"
+          >
+            <ModalContent>
+                <ModalHeader>My Photo </ModalHeader>
+              <ModalCloseButton />
+            <ModalBody>
+            <img
+                        src={imageData}
+                        alt="attachment"
+                        className="w-full h-[26rem]"
+                      />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+                  </>
+                ) : (
+                  ""
+                )}
                 {m.content}
                 <p className="text-xs float-right pt-3 pl-4">{(() => {
                   const messageDate = new Date(m?.createdAt);

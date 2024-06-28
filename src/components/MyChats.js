@@ -173,7 +173,11 @@ const MyChats = forwardRef((props, ref, fetchAgain) => {
                       ${selectUser?._id === chat?._id ? 'text-[#e8e6e6]' : 'text-[#636463]'}
                         `}
                         >
-                          {chat.latestMessage.content}
+                          {chat.latestMessage.attachments.length > 0 ? (
+                            <span>🖼️Photo</span>
+                          ) : (
+                            <span>{chat.latestMessage.content}</span>
+                          )}
                         </span>
                       </p>
                     )}

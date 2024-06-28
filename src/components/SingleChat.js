@@ -4,10 +4,10 @@ import { Box, Text, Stack } from "@chakra-ui/layout";
 import "./styles.css";
 import { IconButton, Spinner, useToast } from "@chakra-ui/react";
 import { getSender, getSenderFull, getPic } from "../config/ChatLogics";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@chakra-ui/avatar";
 import axios from "axios";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, AttachmentIcon } from "@chakra-ui/icons";
 import ProfileModal from "./miscellaneous/ProfileModal";
 import ScrollableChat from "./ScrollableChat.js";
 import Lottie from "react-lottie";
@@ -44,6 +44,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
+  const [newMessageForPic, setNewMessageForPic] = useState("");
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
@@ -53,6 +54,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const toast = useToast();
+  const [pic, setPic] = useState();
+  const [picLoading, setPicLoading] = useState(false);
+  const [showDemoPic, setShowDemoPic] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -95,6 +99,130 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
     notification,
     setNotification,
   } = ChatState();
+
+  const postDetails = (picture) => {
+    setPicLoading(true);
+
+    if (picture.length <= 0) return;
+
+    if (picture.length > 1){
+      toast({
+        title: "You can only send 1 image at a time!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+
+    const pics = picture[0];
+
+    if (pics === undefined) {
+      toast({
+        title: "Please Select an Image!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+
+    setShowDemoPic(true);
+
+    if (pics.type === "image/jpeg" || pics.type === "image/png") {
+      const data = new FormData();
+      data.append("file", pics);
+      data.append("upload_preset", "mern-chat-app");
+      data.append("cloud_name", "dfzbbx31u");
+      fetch("https://api.cloudinary.com/v1_1/dfzbbx31u/image/upload", {
+        method: "post",
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setPic(data);
+          setPicLoading(false);
+        })
+        .catch((err) => {
+          setPicLoading(false);
+        });
+    } else {
+      toast({
+        title: "Please Select an .png or .jpg Image!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+  };
+
+  const imageSend = async (e) => {
+    e.preventDefault();
+      socket.emit("stop typing", selectedChat._id);
+    try {
+
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      setNewMessageForPic("");
+      const response = await axios.post(
+        "/api/message/attachment",
+        {
+          public_id: pic.public_id,
+          url: pic?.url?.toString(),
+          content: newMessageForPic,
+          chatId: selectedChat,
+        },
+        config
+      );
+      setShowDemoPic(false)
+      const data = response.data
+      
+      if (data){
+        pop_sound();
+        socket.emit("new message", data);
+        setMessages([...messages, data]);
+        fetchProps();
+      toast({
+        title: "Successfully",
+        description: "Image sent successfully",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+      else {
+        toast({
+          title: "Error Occured!",
+          description: "Failed to Send the Images",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      }
+
+      // Fetching Here
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Send the Image",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  };
 
   const fetchMessages = async () => {
     if (!selectedChat) return;
@@ -260,7 +388,30 @@ function notification_sound() {
 } 
 
   const typingHandler = (e) => {
+    e.preventDefault();
     setNewMessage(e.target.value);
+
+    if (!socketConnected) return;
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChat._id);
+    }
+    let lastTypingTime = new Date().getTime();
+    var timerLength = 3000;
+    setTimeout(() => {
+      var timeNow = new Date().getTime();
+      var timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", selectedChat._id);
+        setTyping(false);
+      }
+    }, timerLength);
+  };
+
+  const typingHandlerPicture = (e) => {
+    e.preventDefault();
+    setNewMessageForPic(e.target.value);
 
     if (!socketConnected) return;
 
@@ -795,6 +946,82 @@ function notification_sound() {
               </div>
             )}
 
+<div className="flex align-middle gap-2">
+            <div onClick={selectImage} className="cursor-pointer px-2 h-9 mt-3 pt-1 hover:bg-[#8cc0a3] rounded-md duration-500">
+            <AttachmentIcon boxSize={5} />
+            <input
+              type="file"
+              multiple
+              accept="image/png, image/jpeg, image/gif"
+              style={{ display: "none" }}
+              onChange={(e) => postDetails(e.target.files)}
+              ref={imageRef}
+            />
+          </div>
+          <Modal
+            isOpen={showDemoPic}
+            onClose={() => setShowDemoPic(false)}
+          >
+              <ModalOverlay />
+            <ModalContent>
+                <ModalHeader>Send image to {getSender(user, selectedChat.users)}</ModalHeader>
+              <ModalCloseButton />
+            <ModalBody>
+            {picLoading ? (
+              <div className="pl-28">
+                <Spinner
+                size="xl"
+                w={20}
+                h={20}
+                alignSelf="center"
+                margin="auto"
+              />
+              </div>
+              ) : (
+                <>
+              <img src={pic?.url?.toString()} alt="pic" />
+              <FormControl
+              id="first-name"
+              isRequired
+              mt={3}
+            >
+              <Input
+                variant="filled"
+                bg="#E0E0E0"
+                placeholder="Enter a message.."
+                value={newMessageForPic}
+                onChange={typingHandlerPicture}
+              />
+            </FormControl>
+              </>
+              )}
+            </ModalBody>
+                                <ModalFooter>
+                                  <Button
+                                    colorScheme="green"
+                                    mr={3}
+                                    onClick={() => setShowDemoPic(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  {picLoading ? (
+                                    <Button
+                                      colorScheme={picLoading? ("teal"):("green")}
+                                      isLoading
+                                      loadingText='Loading'
+                                      variant='outline'
+                                      spinnerPlacement='start'
+                                    ></Button>
+                                  ) : (
+                                    <Button
+                                      onClick={(e) => imageSend(e)}
+                                      colorScheme="green"
+                                    >Send</Button>
+                                  )}
+                                </ModalFooter>
+                              </ModalContent>
+                            </Modal>
+
             <FormControl
               onKeyDown={sendMessage}
               id="first-name"
@@ -821,6 +1048,7 @@ function notification_sound() {
                 onChange={typingHandler}
               />
             </FormControl>
+            </div>
           </Box>
         </>
       ) : (
