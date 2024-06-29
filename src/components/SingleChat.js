@@ -178,7 +178,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
       };
       setNewMessageForPic("");
       const response = await axios.post(
-        "/api/message/attachment",
+        "https://chatapp-backend-or0g.onrender.com/api/message/attachment",
         {
           public_id: pic.public_id,
           url: pic?.url?.toString(),
