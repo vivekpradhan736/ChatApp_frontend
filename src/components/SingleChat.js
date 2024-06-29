@@ -45,6 +45,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [newMessageForPic, setNewMessageForPic] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
@@ -57,6 +58,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [pic, setPic] = useState();
   const [picLoading, setPicLoading] = useState(false);
   const [showDemoPic, setShowDemoPic] = useState(false);
+
+  const imageRef = useRef(null);
+
+  const selectImage = () => imageRef.current?.click();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -129,25 +134,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
       return;
     }
 
-    setShowDemoPic(true);
-
-    if (pics.type === "image/jpeg" || pics.type === "image/png") {
-      const data = new FormData();
-      data.append("file", pics);
-      data.append("upload_preset", "mern-chat-app");
-      data.append("cloud_name", "dfzbbx31u");
-      fetch("https://api.cloudinary.com/v1_1/dfzbbx31u/image/upload", {
-        method: "post",
-        body: data,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setPic(data);
-          setPicLoading(false);
-        })
-        .catch((err) => {
-          setPicLoading(false);
-        });
+    if (pics) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+      setAvatarPreview(reader.result);
+      setShowDemoPic(true);
+      setPicLoading(false);
+        };
+        reader.readAsDataURL(pics);
     } else {
       toast({
         title: "Please Select an .png or .jpg Image!",
@@ -161,10 +155,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
     }
   };
 
+  console.log("pic",pic)
+
   const imageSend = async (e) => {
     e.preventDefault();
       socket.emit("stop typing", selectedChat._id);
     try {
+      console.log("AvatarPreview",avatarPreview)
 
       const config = {
         headers: {
@@ -173,16 +170,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
         },
       };
       setNewMessageForPic("");
+      console.log("test 1")
       const response = await axios.post(
         "/api/message/attachment",
         {
-          public_id: pic.public_id,
-          url: pic?.url?.toString(),
+          attachments: avatarPreview,
           content: newMessageForPic,
-          chatId: selectedChat,
+          chat: selectedChat._id,
         },
         config
       );
+      console.log("test 2")
       setShowDemoPic(false)
       const data = response.data
       
@@ -213,6 +211,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
 
       // Fetching Here
     } catch (error) {
+      console.error("Error deleting image:", error.message);
       toast({
         title: "Error Occured!",
         description: "Failed to Send the Image",
@@ -952,7 +951,7 @@ function notification_sound() {
             <input
               type="file"
               multiple
-              accept="image/png, image/jpeg, image/gif"
+              accept="image/*"
               style={{ display: "none" }}
               onChange={(e) => postDetails(e.target.files)}
               ref={imageRef}
@@ -979,7 +978,7 @@ function notification_sound() {
               </div>
               ) : (
                 <>
-              <img src={pic?.url?.toString()} alt="pic" />
+              <img src={avatarPreview} alt="pic" />
               <FormControl
               id="first-name"
               isRequired
