@@ -58,6 +58,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [picLoading, setPicLoading] = useState(false);
   const [showDemoPic, setShowDemoPic] = useState(false);
 
+  const imageRef = useRef(null);
+
+  const selectImage = () => imageRef.current?.click();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
