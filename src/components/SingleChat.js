@@ -368,15 +368,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
     }
   };
 
-// function notification_toast() {
-//   if (userInteracted) {
-//     toast({
-//       containerStyle: {
-//       },
-//     })
-//   }
-// }
-
 function notification_sound() {
   if (userInteracted) {
     const audio = new Audio('/notification.wav');
