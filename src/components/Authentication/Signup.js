@@ -89,7 +89,7 @@ const Signup = () => {
     setPicLoading(true);
     if (pics === undefined) {
       toast({
-        title: "Please Select an Image!",
+        title: "",
         status: "warning",
         duration: 5000,
         isClosable: true,

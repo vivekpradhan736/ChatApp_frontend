@@ -10,7 +10,7 @@ import ChatLoading from "./ChatLoading";
 import GroupChatModal from "./miscellaneous/GroupChatModal.js";
 import { ChatState } from "../Context/ChatProvider";
 
-const MyChats = forwardRef((props, ref, fetchAgain) => {
+const MyChats = forwardRef(({ fetchAgain, sidebarWidth }, ref) => {
   const [loggedUser, setLoggedUser] = useState();
 
   const {
@@ -78,7 +78,7 @@ const MyChats = forwardRef((props, ref, fetchAgain) => {
       alignItems="center"
       p={3}
       bg="white"
-      w={{ base: "100%", md: "31%" }}
+      w={{ base: "100%", md: `${sidebarWidth}rem` }}
       borderRadius="lg"
       borderWidth="1px"
     >
@@ -92,14 +92,14 @@ const MyChats = forwardRef((props, ref, fetchAgain) => {
         justifyContent="space-between"
         alignItems="center"
       >
-        My Chats
+        Chats
         <GroupChatModal>
           <Button
             display="flex"
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
           >
-            New Group Chat
+            Group
           </Button>
         </GroupChatModal>
       </Box>

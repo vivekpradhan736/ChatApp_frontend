@@ -45,6 +45,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [newMessageForPic, setNewMessageForPic] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
@@ -105,7 +106,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
   } = ChatState();
 
   const postDetails = (picture) => {
-    setPicLoading(true);
 
     if (picture.length <= 0) return;
 
@@ -121,7 +121,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
     }
 
     const pics = picture[0];
-
     if (pics === undefined) {
       toast({
         title: "Please Select an Image!",
@@ -132,27 +131,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
       });
       return;
     }
-
-    setShowDemoPic(true);
-
-    if (pics.type === "image/jpeg" || pics.type === "image/png") {
-      const data = new FormData();
-      data.append("file", pics);
-      data.append("upload_preset", "mern-chat-app");
-      data.append("cloud_name", "dfzbbx31u");
-      fetch("https://api.cloudinary.com/v1_1/dfzbbx31u/image/upload", {
-        method: "post",
-        body: data,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setPic(data);
-          setPicLoading(false);
-        })
-        .catch((err) => {
-          setPicLoading(false);
-        });
-    } else {
+    
+    if (pics) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+        setShowDemoPic(true);
+      };
+      reader.readAsDataURL(pics);
+    }
+    else {
       toast({
         title: "Please Select an .png or .jpg Image!",
         status: "warning",
@@ -160,16 +148,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
         isClosable: true,
         position: "bottom",
       });
-      setPicLoading(false);
       return;
     }
   };
 
   const imageSend = async (e) => {
-    e.preventDefault();
-      socket.emit("stop typing", selectedChat._id);
+    setPicLoading(true);
+    socket.emit("stop typing", selectedChat._id);
     try {
-
+      console.log("Sending data:", {
+        attachments: avatarPreview,
+        content: newMessageForPic,
+        chat: selectedChat._id,
+      });
+  
       const config = {
         headers: {
           "Content-type": "application/json",
@@ -177,34 +169,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
         },
       };
       setNewMessageForPic("");
+  
       const response = await axios.post(
-        "https://chatapp-backend-or0g.onrender.com/api/message/attachment",
+        `${ENDPOINT}/api/message/attachment`,
         {
-          public_id: pic.public_id,
-          url: pic?.url?.toString(),
+          attachments: avatarPreview,
           content: newMessageForPic,
-          chatId: selectedChat,
+          chat: selectedChat._id,
         },
         config
       );
-      setShowDemoPic(false)
-      const data = response.data
-      
-      if (data){
+      const data = response.data;
+      if (data) {
+        setPicLoading(false);
         pop_sound();
         socket.emit("new message", data);
+        setShowDemoPic(false);
         setMessages([...messages, data]);
         fetchProps();
-      toast({
-        title: "Successfully",
-        description: "Image sent successfully",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom",
-      });
-    }
-      else {
+        toast({
+          title: "Successfully",
+          description: "Image sent successfully",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      } else {
+        setPicLoading(false);
+        setShowDemoPic(false);
         toast({
           title: "Error Occured!",
           description: "Failed to Send the Images",
@@ -214,12 +207,73 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
           position: "bottom",
         });
       }
-
-      // Fetching Here
     } catch (error) {
+      setPicLoading(false);
+      setShowDemoPic(false);
+      console.error("Error sending image:", error.message);
       toast({
         title: "Error Occured!",
         description: "Failed to Send the Image",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  };
+
+  const imageDelete = async (pics) => {
+  
+    if (pics === undefined) {
+      toast({
+        title: "Please Select an Image!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+  
+    try {
+      console.log("Sending delete request to server...");
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const response = await axios.post(
+        `${ENDPOINT}/api/message/attachmentcancel`,
+        {
+          public_id: pics.public_id,
+        },
+        config
+      );
+      console.log("Delete request successful:", response.data);
+  
+      if (response.data?.result === "ok") {
+        toast({
+          title: "Image deletion successful",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      } else {
+        toast({
+          title: "Failed to delete image",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error.message);
+      toast({
+        title: "Error deleting image",
+        description: error.message,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -272,7 +326,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain, fetchProps }) => {
         };
         setNewMessage("");
         const { data } = await axios.post(
-          "https://chatapp-backend-or0g.onrender.com/api/message",
+          `${ENDPOINT}/api/message`,
           {
             content: newMessage,
             chatId: selectedChat,
@@ -505,16 +559,31 @@ function notification_sound() {
           Authorization: `Bearer ${user.token}`,
         },
       };
+      console.log("test1")
       const data = await axios.delete(
-        'https://chatapp-backend-or0g.onrender.com/api/chat/contactremove',
-        { chatId },
+        `${ENDPOINT}/api/chat/contactremove`,
+        chatId,
         config
       );
+      console.log("test2")
+
+      if(data.data.success === true){
+        toast({
+          title: "Deleting chat successful",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom-left",
+        });
+      }
 
       //   if (!chats.find((c) => c._id === data._id))
       //   setChats([data, ...chats]);
       //   setSelectedChat(data);
     } catch (error) {
+      console.log(
+        "Error deleting the chat:",error
+      )
       toast({
         title: "Error deleting the chat",
         description: error.message,
@@ -937,7 +1006,7 @@ function notification_sound() {
               />
             ) : (
               <div className="messages">
-                <ScrollableChat messages={messages} />
+                <ScrollableChat messages={messages} fetchMessages={fetchMessages} />
               </div>
             )}
 
@@ -947,7 +1016,7 @@ function notification_sound() {
             <input
               type="file"
               multiple
-              accept="image/png, image/jpeg, image/gif"
+              accept="image/*"
               style={{ display: "none" }}
               onChange={(e) => postDetails(e.target.files)}
               ref={imageRef}
@@ -961,20 +1030,8 @@ function notification_sound() {
             <ModalContent>
                 <ModalHeader>Send image to {getSender(user, selectedChat.users)}</ModalHeader>
               <ModalCloseButton />
-            <ModalBody>
-            {picLoading ? (
-              <div className="pl-28">
-                <Spinner
-                size="xl"
-                w={20}
-                h={20}
-                alignSelf="center"
-                margin="auto"
-              />
-              </div>
-              ) : (
-                <>
-              <img src={pic?.url?.toString()} alt="pic" />
+              <ModalBody>
+              <img src={avatarPreview} alt="pic" />
               <FormControl
               id="first-name"
               isRequired
@@ -988,12 +1045,10 @@ function notification_sound() {
                 onChange={typingHandlerPicture}
               />
             </FormControl>
-              </>
-              )}
             </ModalBody>
                                 <ModalFooter>
                                   <Button
-                                    colorScheme="green"
+                                    colorScheme="red"
                                     mr={3}
                                     onClick={() => setShowDemoPic(false)}
                                   >

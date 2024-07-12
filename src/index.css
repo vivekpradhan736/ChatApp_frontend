@@ -15,3 +15,24 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.resizer {
+  position: relative;
+  z-index: 2;
+  cursor: col-resize;
+  border-right: 1px solid rgba(73, 144, 202, 0.5);
+  border-left: 1px solid rgba(73, 144, 202, 0.5);
+  transition: background-color 0.3s;
+}
+
+.resizing {
+  background-color: #d4eafc; /* Highlight background when resizing */
+}
+
+/* Disable text selection during resizing */
+.resizer.resizing * {
+  user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+}
