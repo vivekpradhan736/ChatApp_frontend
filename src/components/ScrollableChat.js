@@ -60,7 +60,7 @@ const ScrollableChat = ({ messages, fetchMessages }) => {
       };
 
       const response = await axios.post(
-        `${ENDPOINT}/api/message/attachmentcancel`,
+        `https://chatapp-backend-or0g.onrender.com/api/message/attachmentcancel`,
         chatData,
         config
       );
